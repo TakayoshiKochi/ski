@@ -9,6 +9,7 @@ TESTS = \
 	symbols.sh \
 	fp.sh \
 	break-b.sh \
+	break-debug-event.sh \
 	bski-help.sh \
 	bski-badopt.sh \
 	ski-help.sh \
@@ -29,7 +30,7 @@ testhook.so: testhook.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -shared $(LDFLAGS) \
 		-o $@ $(srcdir)/testhook.c
 
-EXTRA_DIST = $(TESTS) defs.sh symbols.ini fp.ini break-b.ini testhook.c hello hello.c
+EXTRA_DIST = $(TESTS) defs.sh symbols.ini fp.ini break-b.ini break-debug-event.ini testhook.c hello hello.c
 
 CLEANFILES = testhook.so
 clean-local:
