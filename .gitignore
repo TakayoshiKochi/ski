@@ -1,0 +1,67 @@
+# autotools / libtool output
+Makefile
+Makefile.in
+/aclocal.m4
+/autom4te.cache/
+/compile
+/config.guess
+/config.h
+/config.h.in
+/config.log
+/config.status
+/config.sub
+/configure
+/configure~
+/depcomp
+/install-sh
+/libtool
+/ltmain.sh
+/missing
+/stamp-h1
+/ylwrap
+/macros/libtool.m4
+/macros/lt*.m4
+/ski-config
+/ski.spec
+/XSki
+
+# objects and libraries
+*.o
+*.lo
+*.la
+.deps/
+.libs/
+
+# generated sources (src/)
+/src/asm_hash.c
+/src/combfns.c
+/src/combfns.h
+/src/das_instr.c
+/src/eparse.c
+/src/eparse.h
+/src/escan.c
+/src/icnt_core.h
+/src/icnt_ui.h
+/src/immed.h
+/src/instr.c
+/src/predecode.c
+/src/predecode.h
+/src/ski_elf.h
+/src/decoder/decode_tree.c
+/src/decoder/instID.h
+/src/decoder/operands.h
+/src/encoder/EMformats.h
+/src/encoder/encode_table.c
+/src/encoder/formats.c
+
+# binaries
+/src/ski
+/src/bski
+/src/xski
+/src/gski
+/src/fake-xterm/ski-fake-xterm
+
+# test output
+/testsuite/*.log
+/testsuite/*.trs
+/test-suite.log

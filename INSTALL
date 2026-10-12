@@ -1,13 +1,25 @@
+Build requirements
+==================
+
+Building from a git checkout needs autotools, the generators used for
+the derived sources, and a few libraries.  On Debian/Ubuntu:
+
+  % sudo apt install build-essential autoconf automake libtool \
+        libtool-bin gawk gperf bison flex libelf-dev libncurses-dev
+
 Simple install procedure
 ========================
 
-  % gzip -cd ski-1.1.1.tar.gz | tar xvf -  # unpack the sources
-  % cd ski-1.1.1                           # change to the toplevel directory
+  % ./autogen.sh                           # generate 'configure'
   % ./configure                            # run the `configure' script
   % make                                   # build
 
   [ Become root if necessary ]
   % make install                           # install
+
+Quick check (runs a prebuilt IA-64 "hello, world"):
+
+  % src/bski -noconsole testsuite/hello
 
 The Nitty-Gritty
 ================
