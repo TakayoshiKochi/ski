@@ -65,13 +65,16 @@ With these fixed, the build completes and produces `ski`, `bski` and `libski`.
 
 * `bski -noconsole testsuite/hello` prints `hello, world` and exits 0
   (15,950 instructions).
-* `bski testsuite/hello`, without `-noconsole`, prints **nothing** and exits 0.
-  Output goes to an xterm that cannot be spawned, and nothing reports the
-  failure. This is a usability bug that will look like "it's broken".
+* `bski testsuite/hello`, without `-noconsole`, prints **nothing** to the
+  terminal and exits 0. Output goes to a separate xterm window. When an
+  xterm *can* be opened (this machine has WSLg), the window closes as soon
+  as the program exits. When it can't (no xterm or no display), ski aborts
+  without printing anything, and the failure status `-1 << 8` turns into
+  exit code 0. Either way it looks like "it's broken".
 * The curses `ski` UI starts and draws its register and program windows
   under a pty.
-* `-strace` still shows the known `unimplemented system call 1236`
-  (`exit_group`), which is listed in `BUGS`.
+* The `BUGS` entry about `unimplemented system call 1236` (`exit_group`)
+  is stale. That syscall is now handled together with `exit`.
 
 ### 2.5 Forward-compatibility checks
 
@@ -134,12 +137,13 @@ from a clean checkout.
   and `ski`, `bski` and `ski-fake-xterm` are produced.
 
 ### Step 3: Make it run usefully out of the box
-- Console: when xterm is unavailable (exec fails) or `DISPLAY` is unset,
-  fall back to stdout (the `noConsole` path) with a warning instead of
-  failing silently.
-- Optionally implement or ignore `exit_group` (syscall 1236) so the `BUGS`
-  entry stops appearing.
-- Done when `bski testsuite/hello` prints `hello, world` with no extra flags.
+- Console: when the console window can't be created (exec fails, or no
+  display), fall back to stdout (the `noConsole` path) with a warning
+  instead of failing silently.
+- Remove the stale `exit_group` entry from `BUGS`.
+- Done when `bski testsuite/hello` prints `hello, world` with no extra
+  flags whenever no xterm can be opened. With a working display, ski still
+  opens an xterm as before.
 
 ### Step 4: Restore a minimal automated test
 - Replace the QMTest files with a small `make check` (automake `TESTS`)
@@ -173,7 +177,7 @@ from a clean checkout.
 - The HP-UX and FreeBSD ports. Keep the code, but don't spend effort on it.
 - `--with-bfd` / DWARF support, whose libbfd API has changed a lot.
 - Updating the syscall emulation for newer IA-64 glibc binaries (new
-  syscalls such as `openat`, `exit_group`, `set_tid_address`), and running
+  syscalls such as `openat`, `set_tid_address`), and running
   a kernel in system mode.
 - Build-system replacement (CMake/Meson). Not needed, since autotools works
   after Step 1.

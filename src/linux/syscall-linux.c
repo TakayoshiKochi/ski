@@ -1224,8 +1224,6 @@ getPty (void)
        return pfd;
       close (pfd);
     }
-  GrWrtx (8, -1 << 8, 0);	/* set exit status */
-  progExit ("Unable to open console window\n");
   return -1;
 }
 
@@ -1236,6 +1234,10 @@ restore_tty (void)
 }
 
 /*
+ * Returns the console fd, or -1 if the console window could not be
+ * created (e.g., xterm is not installed or there is no display), in
+ * which case the caller falls back to stdin/stdout.
+ *
  * New version of initConsole.
  * It does not use a pipe but the slave/master pty instead
  *
@@ -1262,12 +1264,13 @@ initConsole (int raw)
   int sfd, mfd, i, ret;
 
   /* open master and slave: */
-  mfd = getPty ();
+  if ((mfd = getPty ()) < 0)
+    return -1;
   sfd = open (slave, O_RDWR | O_EXCL | O_NOCTTY);
-  if (sfd < -1)
+  if (sfd < 0)
     {
-      GrWrtx (8, -1 << 8, 0);	/* set exit status */
-      progExit ("Unable to open slave pty\n");
+      close (mfd);
+      return -1;
     }
 
   /*
@@ -1335,11 +1338,22 @@ initConsole (int raw)
   /* parent doesn't need master */
   close (mfd);
 
-  /* read first byte of the window id (and discard it): */
+  if (cons_pid < 0)
+    {
+      close (sfd);
+      return -1;
+    }
+
+  /*
+   * read first byte of the window id (and discard it).  This fails
+   * if the console program could not be run or exited at once.
+   */
   if (read (sfd, cmdBuf, 1) < 1)
     {
-      GrWrtx (8, -1 << 8, 0);	/* set exit status */
-      progExit ("Unable to create console window\n");
+      close (sfd);
+      waitpid (cons_pid, NULL, 0);
+      cons_pid = -1;
+      return -1;
     }
   /*
    * Now once we've seen the first character(s), a tcflush() should be
@@ -1392,7 +1406,13 @@ init (void)
     {
       cfd = initConsole (0);
       if (cfd < 0)
-	noConsole = YES;
+	{
+	  fprintf (stderr, "ski: unable to open a console window (%s); "
+		   "using stdin/stdout instead\n",
+		   consLog || getenv ("SKI_USE_FAKE_XTERM")
+		   ? "ski-fake-xterm" : "xterm");
+	  noConsole = YES;
+	}
     }
 
   if (interface == BATCH)

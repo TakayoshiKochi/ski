@@ -3,6 +3,3 @@ BUGS:
 
 Open
 ----
-20050223-00: running "hello, world", I get an unexpected report of --
-             doSyscall: unimplemented system call 1236
-
