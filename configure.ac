@@ -373,6 +373,7 @@ AC_CONFIG_FILES([macros/Makefile])
 AC_CONFIG_FILES([src/Makefile src/decoder/Makefile src/encoder/Makefile])
 AC_CONFIG_FILES([src/fake-xterm/Makefile])
 AC_CONFIG_FILES([doc/Makefile])
+AC_CONFIG_FILES([testsuite/Makefile])
 
 dnl Output the files
 AC_OUTPUT

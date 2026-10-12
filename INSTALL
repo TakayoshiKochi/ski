@@ -17,7 +17,11 @@ Simple install procedure
   [ Become root if necessary ]
   % make install                           # install
 
-Quick check (runs a prebuilt IA-64 "hello, world"):
+Run the test suite (uses a prebuilt IA-64 "hello, world"):
+
+  % make check
+
+or run it by hand:
 
   % src/bski -noconsole testsuite/hello
 

@@ -19,6 +19,7 @@ Makefile.in
 /missing
 /stamp-h1
 /ylwrap
+/test-driver
 /macros/libtool.m4
 /macros/lt*.m4
 /ski-config
@@ -64,5 +65,7 @@ Makefile.in
 # test output
 /testsuite/*.log
 /testsuite/*.trs
+/testsuite/*.dir/
+/testsuite/testhook.so
 /test-suite.log
 /config.h.in~
