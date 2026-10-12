@@ -4035,7 +4035,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 
 	if (arg4 != sizeof (int) && arg4 != sizeof (struct linger))
 	  {
-	    GrWrtx (8, -1 << 8, 0);	/* set exit status */
+	    GrWrtx (8, -(1 << 8), 0);	/* set exit status */
 	    progExit("NR_setsockopt(%d): non-supported parameter *len=%d not "
 		     "supported\n", (int)arg2, (int)arg4);
 	  }
@@ -4062,7 +4062,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 
 	if (len != sizeof (int) && len != sizeof (struct linger))
 	  {
-	    GrWrtx (8, -1 << 8, 0);	/* set exit status */
+	    GrWrtx (8, -(1 << 8), 0);	/* set exit status */
 	    progExit ("NR_getsockopt(%d): parameter *len=%d not supported\n",
 		      (int)arg2, (int)len);
 	  }
@@ -4240,7 +4240,7 @@ iskbdio (void)
   r = ioctl (noConsole ? 0 : cfd, FIONREAD, &nb);
   if (r == -1)
     {
-      GrWrtx (8, -1 << 8, 0);	/* set exit status */
+      GrWrtx (8, -(1 << 8), 0);	/* set exit status */
       progExit("isbkbdio: ioctl=%d\n", errno);
     }
   return nb > 0 ? 1 : 0;

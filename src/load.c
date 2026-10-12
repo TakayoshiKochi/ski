@@ -361,14 +361,14 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 	    if (errf)
 		(void)fprintf(errf, "%s - %s\n", file_name, elf_errmsg(0));
 	    elfClose(elfptr, *fd);
-	    return NO;
+	    return NULL;
 	}
 	if (ehdr->e_machine != ELF_IA_64) {
 	    if (errf)
 		(void)fprintf(errf, "%s - wrong architecture (%u)\n",
 		    file_name, ehdr->e_machine);
 	    elfClose(elfptr, *fd);
-	    return NO;
+	    return NULL;
 	}
 
 	if (how == EO_EXEC) {
@@ -377,7 +377,7 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 		    (void)fprintf(stderr, "%s - not an executable file\n",
 			file_name);
 		elfClose(elfptr, *fd);
-		return NO;
+		return NULL;
 	    }
 	} else if (how == EO_DYN) {
 	    if (!elf_is_shared_object(ehdr->e_type)) {
@@ -385,7 +385,7 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 		    (void)fprintf(stderr, "%s - not a dynamic object\n",
 			file_name);
 		elfClose(elfptr, *fd);
-		return NO;
+		return NULL;
 	    }
 	}
 
@@ -393,7 +393,7 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 	    if (errf)
 		(void)fprintf(stderr, "%s - unsupported ABI\n", file_name);
 	    elfClose(elfptr, *fd);
-	    return NO;
+	    return NULL;
 	}
     } else {
 	Elf32_Ehdr *ehdr;
@@ -403,14 +403,14 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 	    if (errf)
 		(void)fprintf(errf, "%s - %s\n", file_name, elf_errmsg(0));
 	    elfClose(elfptr, *fd);
-	    return NO;
+	    return NULL;
 	}
 	if (ehdr->e_machine != ELF_IA_64) {
 	    if (errf)
 		(void)fprintf(errf, "%s - wrong architecture (%u)\n",
 		    file_name, ehdr->e_machine);
 	    elfClose(elfptr, *fd);
-	    return NO;
+	    return NULL;
 	}
 
 	if (how == EO_EXEC) {
@@ -419,7 +419,7 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 		    (void)fprintf(stderr, "%s - not an executable file\n",
 			file_name);
 		elfClose(elfptr, *fd);
-		return NO;
+		return NULL;
 	    }
 	} else if (how == EO_DYN) {
 	    if (!elf_is_shared_object(ehdr->e_type)) {
@@ -427,7 +427,7 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 		    (void)fprintf(stderr, "%s - not a dynamic object\n",
 			file_name);
 		elfClose(elfptr, *fd);
-		return NO;
+		return NULL;
 	    }
 	}
 
@@ -435,7 +435,7 @@ static Elf *elfOpen(const char *file_name, FILE *errf, int *fd, int how,
 	    if (errf)
 		(void)fprintf(stderr, "%s - unsupported ABI\n", file_name);
 	    elfClose(elfptr, *fd);
-	    return NO;
+	    return NULL;
 	}
     }
 
