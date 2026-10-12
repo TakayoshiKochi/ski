@@ -317,7 +317,7 @@ static BOOL overflow(RMODE rmode, unsigned emax, unsigned mwidth, FREG *d)
     return inf;
 }
 
-static unsigned round(FREG *d, unsigned mantWidth, RMODE rmode, DWORD resLo)
+static unsigned fpRound(FREG *d, unsigned mantWidth, RMODE rmode, DWORD resLo)
 {
     BOOL last, guard, sticky;
     unsigned fpa = 0;
@@ -438,7 +438,7 @@ static unsigned normalize(FREG *d, DWORD low, unsigned flags, RMODE rmode,
     d2 = *d;
     f2 = flags;
 
-    flags |= round(d, mantWidth, rmode, low);
+    flags |= fpRound(d, mantWidth, rmode, low);
     if (d->exp > expMax) {		/* Overflow */
 	if (traps & O_MASK) {
 	    BOOL fpa;
@@ -484,7 +484,7 @@ static unsigned normalize(FREG *d, DWORD low, unsigned flags, RMODE rmode,
 		    d->mant = 0x1;
 		mantWidth = 0;
 	    }
-	    flags |= round(d, mantWidth, rmode, low);
+	    flags |= fpRound(d, mantWidth, rmode, low);
 	    if (d->mant) {
 		d->unorm = expMin - d->exp;
 		if (expMin == EXT_EMIN && d->unorm)
@@ -737,7 +737,7 @@ static unsigned fmpyadd(const FREG *a, const FREG *b, FREG *c, FREG *d,
 }
 
 /* Sets d = a * b + c */
-unsigned fma(FREG *a, FREG *b, FREG *c, FREG *d, FPPC prec, BYTE traps,
+unsigned fpFma(FREG *a, FREG *b, FREG *c, FREG *d, FPPC prec, BYTE traps,
 	     BYTE controls)
 {
     unsigned flags;
@@ -1326,7 +1326,7 @@ static unsigned full_fmax(FREG *f1, FREG *f2, FREG *ft, BYTE traps)
     return flags;
 }
 
-unsigned fmax(FREG *f1, FREG *f2, FREG *ft, BYTE traps)
+unsigned fpFmax(FREG *f1, FREG *f2, FREG *ft, BYTE traps)
 {
     unsigned flags;
 
@@ -1371,7 +1371,7 @@ static unsigned full_fmin(FREG *f1, FREG *f2, FREG *ft, BYTE traps)
     return flags;
 }
 
-unsigned fmin(FREG *f1, FREG *f2, FREG *ft, BYTE traps)
+unsigned fpFmin(FREG *f1, FREG *f2, FREG *ft, BYTE traps)
 {
     unsigned flags;
 

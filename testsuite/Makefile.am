@@ -7,6 +7,7 @@ TESTS = \
 	conslog.sh \
 	hook.sh \
 	symbols.sh \
+	fp.sh \
 	bski-help.sh \
 	bski-badopt.sh \
 	ski-help.sh \
@@ -27,7 +28,7 @@ testhook.so: testhook.c
 	$(CC) $(CPPFLAGS) $(CFLAGS) -fPIC -shared $(LDFLAGS) \
 		-o $@ $(srcdir)/testhook.c
 
-EXTRA_DIST = $(TESTS) defs.sh symbols.ini testhook.c hello hello.c
+EXTRA_DIST = $(TESTS) defs.sh symbols.ini fp.ini testhook.c hello hello.c
 
 CLEANFILES = testhook.so
 clean-local:

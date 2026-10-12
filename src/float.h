@@ -40,7 +40,7 @@ typedef enum {
     CLASS_DE0, CLASS_FR0 = 0xFF
 } FPCLASS;
 
-unsigned fma(FREG *a, FREG *b, FREG *c, FREG *d, FPPC prec, BYTE traps,
+unsigned fpFma(FREG *a, FREG *b, FREG *c, FREG *d, FPPC prec, BYTE traps,
 	     BYTE controls);
 unsigned fms(FREG *a, FREG *b, FREG *c, FREG *d, FPPC prec, BYTE traps,
 	     BYTE controls);
@@ -66,8 +66,8 @@ unsigned frsqrta(const FREG *f1, FREG *ft, BOOL *pt, BYTE traps);
 unsigned fprsqrta(const FREG *f1, FREG *ft, BOOL *pt, BYTE traps);
 unsigned famax(FREG *f1, FREG *f2, FREG *ft, BYTE traps);
 unsigned famin(FREG *f1, FREG *f2, FREG *ft, BYTE traps);
-unsigned fmax(FREG *f1, FREG *f2, FREG *ft, BYTE traps);
-unsigned fmin(FREG *f1, FREG *f2, FREG *ft, BYTE traps);
+unsigned fpFmax(FREG *f1, FREG *f2, FREG *ft, BYTE traps);
+unsigned fpFmin(FREG *f1, FREG *f2, FREG *ft, BYTE traps);
 unsigned fcvtfx(const FREG *f1, FREG *ft, BYTE traps, BYTE controls);
 unsigned fcvtfu(const FREG *f1, FREG *ft, BYTE traps, BYTE controls);
 unsigned fpcvtfx(const FREG *f1, FREG *ft, BYTE traps, BYTE controls);
