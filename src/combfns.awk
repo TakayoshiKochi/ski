@@ -76,16 +76,20 @@ function copyfile(fname) {
     printf "    }\n\n    {\n" > CFILE
     copyfile(wrfn)
     printf "    }\n" > CFILE
-    print "    if (0) {" > CFILE
-    print "      src1=0;src2=0;src3=0;cntx=0;dst1=0;dst2=0;" > CFILE
-    print "      srcnat1=0;srcnat2=0;srcnat3=0;dstnat1=0;dstnat2=0;" > CFILE
-    print "      cmpres1=0;cmpres2=0;pdst1=0;qual=0;" > CFILE
-    print "      fsrc1.mant=0;fsrc2.mant=0;fsrc3.mant=0;" > CFILE
-    print "      fdst1.mant=0;fdst2.mant=0;syscallno=0;" > CFILE
-    print "      sofx=0;soilx=0;sorx=0;posx=0;lenx=0;mhtypex=0;" > CFILE
-    print "      cpl=0;traps=0;ctrls=0;" > CFILE
-    print "      arg0=arg1=arg2=arg3=arg4=arg5=arg6=arg7=0;" > CFILE
-    print "      scStatus=0;scRetval=0;\n" > CFILE
-    print "    }" > CFILE
+    # Each function declares the same locals but uses only some of
+    # them; mark them all used to avoid -Wunused(-but-set)-variable.
+    print "    (void)src1; (void)src2; (void)src3; (void)cntx;" > CFILE
+    print "    (void)dst1; (void)dst2;" > CFILE
+    print "    (void)srcnat1; (void)srcnat2; (void)srcnat3;" > CFILE
+    print "    (void)dstnat1; (void)dstnat2;" > CFILE
+    print "    (void)cmpres1; (void)cmpres2; (void)pdst1; (void)qual;" > CFILE
+    print "    (void)fsrc1; (void)fsrc2; (void)fsrc3;" > CFILE
+    print "    (void)fdst1; (void)fdst2; (void)syscallno;" > CFILE
+    print "    (void)sofx; (void)soilx; (void)sorx;" > CFILE
+    print "    (void)posx; (void)lenx; (void)mhtypex;" > CFILE
+    print "    (void)cpl; (void)traps; (void)ctrls;" > CFILE
+    print "    (void)arg0; (void)arg1; (void)arg2; (void)arg3;" > CFILE
+    print "    (void)arg4; (void)arg5; (void)arg6; (void)arg7;" > CFILE
+    print "    (void)scStatus; (void)scRetval;" > CFILE
     printf "    return StSuccess | st;\n}\n" > CFILE
 }
