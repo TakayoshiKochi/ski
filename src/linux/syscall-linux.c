@@ -1641,7 +1641,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
   struct lia64_statfs lia64_statfs;
   struct statfs host_statfs;
   struct lia64_itimerval lia64_itval;
-  struct itimerval host_itval;
+  struct itimerval host_itval, host_old_itval;
   struct lia64_stat lia64_stat;
   struct lia64_old_stat lia64_old_stat;
   struct stat host_stat;
@@ -2973,13 +2973,13 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
       host_itval.it_interval.tv_usec = lia64_itval.it_interval.tv_usec;
       host_itval.it_value.tv_sec = lia64_itval.it_value.tv_sec;
       host_itval.it_value.tv_usec = lia64_itval.it_value.tv_usec;
-      *status = setitimer (arg0, &host_itval, &host_itval);
+      *status = setitimer (arg0, &host_itval, &host_old_itval);
       if ((int) *status != -1 && arg2 != 0)
 	{
-	  lia64_itval.it_interval.tv_sec = host_itval.it_interval.tv_sec;
-	  lia64_itval.it_interval.tv_usec = host_itval.it_interval.tv_usec;
-	  lia64_itval.it_value.tv_sec = host_itval.it_value.tv_sec;
-	  lia64_itval.it_value.tv_usec = host_itval.it_value.tv_usec;
+	  lia64_itval.it_interval.tv_sec = host_old_itval.it_interval.tv_sec;
+	  lia64_itval.it_interval.tv_usec = host_old_itval.it_interval.tv_usec;
+	  lia64_itval.it_value.tv_sec = host_old_itval.it_value.tv_sec;
+	  lia64_itval.it_value.tv_usec = host_old_itval.it_value.tv_usec;
 	  memBBWrt_alloc (ADDPTR (arg2), (BYTE *) &lia64_itval,
 			  sizeof (lia64_itval));
 	}

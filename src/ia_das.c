@@ -205,7 +205,7 @@ static char *rep(IAinstInfoPtr info, char *mne)
 
 static void sibEA(IAinstInfoPtr info, BYTE mod, char *buf)
 {
-    char baseStr[6], scaleStr[3], indexStr[8];
+    char baseStr[6], scaleStr[5], indexStr[8];
     BYTE defSeg;
 
     if (info->base == NO_REG) {

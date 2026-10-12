@@ -503,16 +503,24 @@ static BOOL bin_load(unsigned argc, char *argv[], ADDR offset)
     pspSeg = start >> 4;
     startSeg = (start + offset) >> 4;
 
-    /* XXX - this works on a BIG-ENDIAN host only */
+    /* EXE files are little-endian; byte-swap them on big-endian hosts */
     if (statBuf.st_size >= sizeof (EXEheader) &&
 	buf[0] == 0x4d && buf[1] == 0x5a) {	/* EXE signature */
+#if BYTE_ORDER == BIG_ENDIAN
 	swab(buf, &eh, sizeof (EXEheader));
+#else
+	memcpy(&eh, buf, sizeof (EXEheader));
+#endif
 	codeFileOffset = eh.exHeaderSize * 16;
 	codeSize = statBuf.st_size - codeFileOffset;
 	symOffset = offset;
 	for (i = 0, reloc = (EXErelocItemPtr)(buf + eh.exRelocTable);
 	     i < eh.exRelocItems; i++, reloc++) {
-	    swab(reloc, reloc, sizeof (EXErelocItem));
+#if BYTE_ORDER == BIG_ENDIAN
+	    EXErelocItem tmp = *reloc;
+
+	    swab(&tmp, reloc, sizeof (EXErelocItem));
+#endif
 	    segAdr = buf + codeFileOffset + (reloc->seg << 4) + reloc->ofs;
 	    relocSeg = (*(segAdr+1) << 8 | *segAdr) + startSeg;
 	    *(segAdr+1) = relocSeg >> 8;
