@@ -164,6 +164,19 @@ from a clean checkout.
   real warnings stand out.
 - Done when the build is clean under gcc 13 and clang 18 with
   `-std=gnu2x`, and `make check` passes.
+- *Status:* gcc 13 (default and `-std=gnu2x` with GCC 14's
+  `-Werror=` set) and clang 18 (`-std=gnu2x`) build with no errors,
+  and `make check` (13 tests) passes on all three. Warnings went from
+  about 20,500 to 141 (gcc) and 59 (clang). The warnings the compilers
+  flagged also exposed several real bugs, which are fixed: the syscall
+  arguments for `break.b`/`break.x`, r8/r10 being overwritten on
+  debug-event breaks, `setitimer` aliasing, the DOS EXE loader's
+  byte-swapping, a buffer overflow in the curses data window, and
+  uninitialized reads in the IA-32 emulation.
+  The remaining warnings are in hand-written code and look harmless:
+  `maybe-uninitialized`, ignored `read()`/`write()` results,
+  `pointer-sign`, and missing `GTK_INTERFACE` cases in switches.
+  See §4.
 
 ### Step 6 (optional): CI
 - Add a GitHub Actions workflow on ubuntu-latest that installs §2.1, then
@@ -176,6 +189,9 @@ from a clean checkout.
   disabled. A port to GTK3/4 or a removal is a separate decision.
 - The HP-UX and FreeBSD ports. Keep the code, but don't spend effort on it.
 - `--with-bfd` / DWARF support, whose libbfd API has changed a lot.
+- The remaining ~140 compiler warnings (see Step 5). Many of the
+  ignored `read()` results are in `load.c`, so a truncated ELF file is
+  not detected.
 - Updating the syscall emulation for newer IA-64 glibc binaries (new
   syscalls such as `openat`, `set_tid_address`), and running
   a kernel in system mode.
