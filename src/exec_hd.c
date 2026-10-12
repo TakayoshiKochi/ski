@@ -63,6 +63,64 @@
 		    0 : ((62 - NAT_COLLECT_BIT(bsp) + (nregs)) / 63) )
 #endif
 
+/*
+ * Read the system call number and arguments for a break instruction.
+ * Used by all break forms (break.i/m/f, break.b and break.x).
+ */
+#if defined __linux__
+/*
+ * Note: we read out0-out7 here.  This may look counter-intuitive since the
+ * called function expects the arguments in in0-in7.  However, the normal
+ * syscall sequence is:
+ *
+ *	br.call syscall_stub -> break 0x100000 -> br.call -> syscall -> br.ret
+ *
+ * The first call renames out0-outN to in0-inN, the second call acts as a
+ * no-op as far as renaming is concerned because "size of frame" (sof) is
+ * set to zero by the first br.call.
+ *
+ * However, consider the case of an inlined system call.  In this case,
+ * the syscall sequence is:
+ *
+ *	break 0x100000 -> br.call -> syscall -> br.ret
+ *
+ * This time, the syscall args are in out0-outN when the break instruction
+ * is executed and (the formerly second) br.call is what is causing the
+ * renaming from out0-outN to in0-inN.  In other words, to make the
+ * user-level simulation work both with syscall stubs and with inlined
+ * stubs, we need to read the _output_ registers.
+ */
+#define BREAK_SYSCALL_RD					\
+    do {							\
+	int base = 32;						\
+								\
+	if (unixABI)						\
+	    base += soil;					\
+	GrRd(base + 0, ARG0, SRCNAT1, NO);			\
+	GrRd(base + 1, ARG1, SRCNAT1, NO);			\
+	GrRd(base + 2, ARG2, SRCNAT1, NO);			\
+	GrRd(base + 3, ARG3, SRCNAT1, NO);			\
+	GrRd(base + 4, ARG4, SRCNAT1, NO);			\
+	GrRd(base + 5, ARG5, SRCNAT1, NO);			\
+	GrRd(base + 6, ARG6, SRCNAT1, NO);			\
+	GrRd(base + 7, ARG7, SRCNAT1, NO);			\
+	GrRd(15, SC_NUM, SRCNAT1, NO);				\
+    } while (0)
+#else /* !defined __linux__ */
+#define BREAK_SYSCALL_RD					\
+    do {							\
+	GrRd(8, SC_NUM, SRCNAT1, NO);				\
+	GrRd(32, ARG0, SRCNAT1, NO);				\
+	GrRd(33, ARG1, SRCNAT1, NO);				\
+	GrRd(34, ARG2, SRCNAT1, NO);				\
+	GrRd(35, ARG3, SRCNAT1, NO);				\
+	GrRd(36, ARG4, SRCNAT1, NO);				\
+	GrRd(37, ARG5, SRCNAT1, NO);				\
+	GrRd(38, ARG6, SRCNAT1, NO);				\
+	GrRd(39, ARG7, SRCNAT1, NO);				\
+    } while (0)
+#endif /* !defined __linux__ */
+
 #define ALU_1OP_EX(expr)	\
     do {			\
 	DST1    = expr;		\
