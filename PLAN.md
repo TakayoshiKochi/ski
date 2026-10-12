@@ -92,7 +92,8 @@ With these fixed, the build completes and produces `ski`, `bski` and `libski`.
   * `cur.c:361,522`: `%*s` is given a `size_t` width.
   * `ssDSym.c:94`, `ui.c:1409`, `ia_das.c:225`: possible sprintf overflows.
   * `ssDCmd.c:515`: overlapping `strcpy`/`sprintf` arguments (`-Wrestrict`).
-  * `ltdl.c`: `-Waddress` warnings in the bundled 2007 libltdl.
+  * `ltdl.c`: `-Waddress` warnings in the bundled 2007 libltdl (file
+    removed in Step 1).
 
 ## 3. Plan
 
@@ -116,8 +117,11 @@ from a clean checkout.
   `AC_PROG_LEX([noyywrap])` (or `%option noyywrap` in `escan.l`), `AC_PROG_CC`
   without the compiler list. Remove `AM_PROG_CC_STDC`.
 - Remove `AC_LIB_LTDL` / `macros/ltdl.m4`, which stops libtoolize from
-  copying a `libltdl/` tree. Keep the bundled `src/ltdl.c` for now. Plain
-  `dlopen` could replace it later (see §4).
+  copying a `libltdl/` tree. The bundled `src/ltdl.c` needs about 15 config
+  defines from that macro, and its only caller is the `SKIHOOK_PATH` loader
+  in `sim.c`. So that loader now calls `dlopen`/`dlsym` directly, and the
+  bundled libltdl (`src/ltdl.[ch]`) is deleted. This was originally planned
+  for later. *(Done in Step 1.)*
 - Make missing `gperf` or libelf fail at configure time with a clear
   message.
 - Done when `autoreconf -fi && ./configure` runs with no errors and no
@@ -167,7 +171,6 @@ from a clean checkout.
 - xski (Motif) and gski (GTK2 + libglade are both deprecated). Leave them
   disabled. A port to GTK3/4 or a removal is a separate decision.
 - The HP-UX and FreeBSD ports. Keep the code, but don't spend effort on it.
-- Replacing the bundled `ltdl.c` (2007) with `dlopen`/system libltdl.
 - `--with-bfd` / DWARF support, whose libbfd API has changed a lot.
 - Updating the syscall emulation for newer IA-64 glibc binaries (new
   syscalls such as `openat`, `exit_group`, `set_tid_address`), and running

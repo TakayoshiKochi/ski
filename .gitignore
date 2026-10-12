@@ -65,3 +65,4 @@ Makefile.in
 /testsuite/*.log
 /testsuite/*.trs
 /test-suite.log
+/config.h.in~

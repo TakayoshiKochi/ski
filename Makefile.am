@@ -19,6 +19,8 @@
 ##
 ##
 
+ACLOCAL_AMFLAGS=-I macros
+
 SUBDIRS=macros src doc
 
 bin_SCRIPTS=ski-config

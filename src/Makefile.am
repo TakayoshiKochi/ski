@@ -22,7 +22,7 @@
 
 SUBDIRS= decoder encoder fake-xterm
 
-AM_CPPFLAGS= $(INCLTDL) $(X_CFLAGS) $(DWARF_CFLAGS) -I$(srcdir)/decoder \
+AM_CPPFLAGS= $(X_CFLAGS) $(DWARF_CFLAGS) -I$(srcdir)/decoder \
 			 -I$(srcdir)/encoder -I$(top_builddir)/src/encoder \
 			 -I$(top_builddir)/src/decoder $(GSKI_CFLAGS) \
 			 -DSKI_DATA_DIR=\"$(pkgdatadir)\"
@@ -130,7 +130,7 @@ if LINUX
 ski_LDFLAGS = 
 endif
 
-ski_LDADD= libski.la -ldl
+ski_LDADD= libski.la
 
 skiincludedir= $(includedir)/ski-$(SKI_MAJOR_VERSION).$(SKI_MINOR_VERSION)
 skiinclude_HEADERS= \
@@ -181,8 +181,7 @@ noinst_HEADERS= \
 	eparse.h \
 	libdas.h \
 	netdev.h \
-	osload.h \
-	ltdl.h
+	osload.h
 
 EXTRA_linux_FILES = \
 	linux/dwarf-linux.c \
@@ -279,7 +278,6 @@ libski_la_SOURCES= \
 	eparse.y \
 	escan.l \
 	load.c \
-	ltdl.c \
 	platform.c \
 	libdas.c \
 	libsrs.c
@@ -296,7 +294,7 @@ libski_la_LDFLAGS = \
 	-release $(LT_RELEASE) \
 	-export-dynamic
 
-libski_la_LIBADD= encoder/libencoder.la decoder/libdecoder.la $(LIBLTDL) \
+libski_la_LIBADD= encoder/libencoder.la decoder/libdecoder.la \
 	$(DWARF_LIBS) $(X_INTERFACE_LIBS) $(GSKI_LIBS)
 
 EXTRA_DIST= \
