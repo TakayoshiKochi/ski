@@ -378,9 +378,11 @@ Status bsfIAEx(IAinstInfoPtr info)
     /* bsf modifies ZF; CF, SF, OF, PF, and AF are undefined */
     if (info->opSize == IA16)
 	src &= 0xffff;
-    if (!src)
+    if (!src) {
+	/* the destination is undefined; leave it unchanged like the CPUs do */
 	arithFlags.zf = 1;
-    else {
+	return StSuccess;
+    } else {
 	arithFlags.zf = 0;
 	res = 0;
 	while (!(src & 0x1)) {
@@ -403,9 +405,11 @@ Status bsrIAEx(IAinstInfoPtr info)
     /* bsr modifies ZF; CF, SF, OF, PF, and AF are undefined */
     if (info->opSize == IA16)
 	src = (src & 0xffff) << 16;
-    if (!src)
+    if (!src) {
+	/* the destination is undefined; leave it unchanged like the CPUs do */
 	arithFlags.zf = 1;
-    else {
+	return StSuccess;
+    } else {
 	arithFlags.zf = 0;
 	res = (info->opSize == IA16) ? 15 : 31;
 	while (!sign32(src)) {

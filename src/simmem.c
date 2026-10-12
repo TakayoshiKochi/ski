@@ -2191,8 +2191,9 @@ Status memIAadrRd(ADDR adr, BYTE size, Accesstype acc, ADDR *padr, ADDR *padr2,
 		return 0;
 	    *padr2 = page_base(eadr);
 	    if (acc & READ_ACCESS) {
-		if ((pb = pmemMLookup_b(adr)) &&
-		    (pb1 = pmemMLookup_b(eadr)))
+		pb = pmemMLookup_b(adr);
+		pb1 = pmemMLookup_b(eadr);
+		if (pb && pb1)
 		    *pval = *pb1 << 8 | *pb;
 		else {
 		    if (!pb) {
