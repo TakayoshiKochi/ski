@@ -38,14 +38,20 @@ typedef enum { BATCH = 0, X_INTERFACE, CURSES_INTERFACE, GTK_INTERFACE } Interfa
  *  Internal symbol interface
  *-------------------------------------------------------------------------*/
 
-typedef REG (*PGetFn)();
-typedef BOOL (*PSetFn)();
+/* accessors for a single register (SINGLE_SYM, BITF_SYM) */
+typedef REG (*PGetFn)(int cproc);
+typedef BOOL (*PSetFn)(int cproc, REG val);
+/* accessors for a register in a register set (REGSET_SYM, RS_BITF_SYM) */
+typedef REG (*PGetRsFn)(int cproc, int i);
+typedef BOOL (*PSetRsFn)(int cproc, int i, REG val);
 
 struct isym {
     char name[NAMLEN];          /* internal symbol name */
     Symtyp type;                /* internal symbol type */
-    PGetFn getFn;
+    PGetFn getFn;		/* SINGLE_SYM, BITF_SYM */
     PSetFn setFn;
+    PGetRsFn getRsFn;		/* REGSET_SYM, RS_BITF_SYM */
+    PSetRsFn setRsFn;
     void *pval;
     BOOL readonly;		/* is symbol read-only */
     unsigned len;		/* subfield length (len == 0 => not a subfld) */

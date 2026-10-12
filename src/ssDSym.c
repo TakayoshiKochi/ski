@@ -147,11 +147,11 @@ void isymIns1(const char *sname, PGetFn gf, PSetFn sf, int dbase)
     topisym++;
 }
 
-void isymIns2(const char *sname, PGetFn gf, PSetFn sf, int dbase, int ndx)
+void isymIns2(const char *sname, PGetRsFn gf, PSetRsFn sf, int dbase, int ndx)
 {
     isymChk(sname);
-    isymtbl[topisym].getFn = gf;
-    isymtbl[topisym].setFn = sf;
+    isymtbl[topisym].getRsFn = gf;
+    isymtbl[topisym].setRsFn = sf;
     isymtbl[topisym].type  = REGSET_SYM;
     if (ndx >= 0) {	/* specific register in a register set */
 	isymtbl[topisym].ndx = ndx;
@@ -180,12 +180,12 @@ void isymIns3(const char *sname, PGetFn gf, PSetFn sf, int dbase,
     topisym++;
 }
 
-void isymIns4(const char *sname, PGetFn gf, PSetFn sf, int dbase, unsigned ndx,
+void isymIns4(const char *sname, PGetRsFn gf, PSetRsFn sf, int dbase, unsigned ndx,
 	      unsigned start, unsigned len)
 {
     isymChk(sname);
-    isymtbl[topisym].getFn = gf;
-    isymtbl[topisym].setFn = sf;
+    isymtbl[topisym].getRsFn = gf;
+    isymtbl[topisym].setRsFn = sf;
     isymtbl[topisym].type  = RS_BITF_SYM;
     isymtbl[topisym].ndx   = ndx;
     isymtbl[topisym].len   = len;
@@ -224,6 +224,44 @@ struct isym *isymVLkp(const char *sname)
 	    }
 	}
     return NULL;
+}
+
+/*
+ * Adapters for accessors whose signatures differ from PGetFn/PSetRsFn.
+ * The casts truncate the value the same way the old unprototyped calls
+ * did.
+ */
+static REG totalInstsGet(int cproc) { return getTotalInsts(); }
+static REG totalCyclesGet(int cproc) { return getTotalCycles(); }
+static REG totalFaultsGet(int cproc) { return getTotalFaults(); }
+static REG exitedGet(int cproc) { return getExited(); }
+#ifdef NEW_MP
+static REG curPidGet(int cproc) { return getCurPid(); }
+#endif
+
+static BOOL grNatSetReg(int cproc, int i, REG val)
+{
+    return grNatSet(cproc, i, (BOOL)val);
+}
+
+static BOOL phyGrNatSetReg(int cproc, int i, REG val)
+{
+    return phyGrNatSet(cproc, i, (BOOL)val);
+}
+
+static BOOL bkrNatSetReg(int cproc, int i, REG val)
+{
+    return bkrNatSet(cproc, i, (BOOL)val);
+}
+
+static BOOL frExpSetReg(int cproc, int i, REG val)
+{
+    return frExpSet(cproc, i, (WORD)val);
+}
+
+static BOOL prSetReg(int cproc, int i, REG val)
+{
+    return prSet(cproc, i, (BOOL)val);
 }
 
 /*---------------------------------------------------------------------------
@@ -283,23 +321,23 @@ void isymInit(void)
     isymIns1("bol", bolGet, NULL, DECEXP);
 
     isymIns2("r%u", grGet, grSet, HEXEXP, -/*GR_STK_BASE+N_STACK_VIRT*/128);
-    isymIns2("r%u.nat", grNatGet, grNatSet, HEXEXP, -/*GR_STK_BASE+N_STACK_VIRT*/128);
+    isymIns2("r%u.nat", grNatGet, grNatSetReg, HEXEXP, -/*GR_STK_BASE+N_STACK_VIRT*/128);
     isymIns2("gp", grGet, grSet, HEXEXP, GP_ID);
     isymIns2("sp", grGet, grSet, HEXEXP, SP_ID);
     isymIns2("tp", grGet, grSet, HEXEXP, TP_ID);
-    isymIns2("gp.nat", grNatGet, grNatSet, HEXEXP, GP_ID);
-    isymIns2("sp.nat", grNatGet, grNatSet, HEXEXP, SP_ID);
-    isymIns2("tp.nat", grNatGet, grNatSet, HEXEXP, TP_ID);
+    isymIns2("gp.nat", grNatGet, grNatSetReg, HEXEXP, GP_ID);
+    isymIns2("sp.nat", grNatGet, grNatSetReg, HEXEXP, SP_ID);
+    isymIns2("tp.nat", grNatGet, grNatSetReg, HEXEXP, TP_ID);
     isymIns2("pgr%u", phyGrGet, phyGrSet, HEXEXP,
 	     -/*GR_STK_BASE+N_STACK_PHYS*/128);
-    isymIns2("pgr%u.nat", phyGrNatGet, phyGrNatSet, HEXEXP,
+    isymIns2("pgr%u.nat", phyGrNatGet, phyGrNatSetReg, HEXEXP,
 	     -/*GR_STK_BASE+N_STACK_PHYS*/128);
     isymIns2("bkr%u", bkrGet, bkrSet, HEXEXP, -/*NBGRS*/16);
-    isymIns2("bkr%u.nat", bkrNatGet, bkrNatSet, HEXEXP, -/*NBGRS*/16);
+    isymIns2("bkr%u.nat", bkrNatGet, bkrNatSetReg, HEXEXP, -/*NBGRS*/16);
     isymIns2("f%u.s", frSignGet, frSignSet, HEXEXP, -/*NFRS*/128);
-    isymIns2("f%u.e", frExpGet, frExpSet, HEXEXP, -/*NFRS*/128);
+    isymIns2("f%u.e", frExpGet, frExpSetReg, HEXEXP, -/*NFRS*/128);
     isymIns2("f%u.m", frMantGet, frMantSet, HEXEXP, -/*NFRS*/128);
-    isymIns2("p%u", prGet, prSet, HEXEXP, -/*NPRS*/64);
+    isymIns2("p%u", prGet, prSetReg, HEXEXP, -/*NPRS*/64);
     isymIns2("b%u", brGet, brSet, HEXEXP, -/*NBRS*/8);
     isymIns2("ar%u", arGet, arSet, HEXEXP, -/*NARS*/128);
     isymIns2("rp", brGet, brSet, HEXEXP, RP_ID);
@@ -545,14 +583,14 @@ void isymInit(void)
     isymIns4("eflags.pf",  arGet, arSet, HEXEXP, EFLAGS_ID,  2, 1);
     isymIns4("eflags.cf",  arGet, arSet, HEXEXP, EFLAGS_ID,  0, 1);
 
-    isymIns1("$insts$", getTotalInsts, NULL, DECEXP);
-    isymIns1("$cycles$", getTotalCycles, NULL, DECEXP);
-    isymIns1("$faults$", getTotalFaults, NULL, DECEXP);
+    isymIns1("$insts$", totalInstsGet, NULL, DECEXP);
+    isymIns1("$cycles$", totalCyclesGet, NULL, DECEXP);
+    isymIns1("$faults$", totalFaultsGet, NULL, DECEXP);
 #ifdef NEW_MP
-    isymIns1("$pid$", getCurPid, NULL, DECEXP);
+    isymIns1("$pid$", curPidGet, NULL, DECEXP);
 #endif
     isymIns1("$heap$", heapGet, NULL, HEXEXP);
-    isymIns1("$exited$", getExited, NULL, HEXEXP);
+    isymIns1("$exited$", exitedGet, NULL, HEXEXP);
 
     qsort((void *)isymtbl, topisym, sizeof (struct isym), cmpisym);
 #if 0
