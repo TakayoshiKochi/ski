@@ -810,7 +810,7 @@ static char *iarLine(unsigned i)
 	tmpreg = arGet(viewPid, CR3_CR2_ID);
 	cr3cr2 = *(IAcr3cr2Ptr)&tmpreg;
 	(void)sprintf(buf, "cr2 %08llx cr3 %08llx [%05x|%s|%s]",
-		      cr3cr2.pfla,
+		      (unsigned long long)cr3cr2.pfla,
 		      (unsigned long long)BitfX(*(DWORD*)&cr3cr2, 32, 32),
 		      (unsigned int)cr3cr2.pdb,
 		      cr3cr2.pcd ? "PCD" : "pcd",
@@ -1404,8 +1404,8 @@ char *productInfo(void)
  *--------------------------------------------------------------------------*/
 char *getSimID(void)
 {
-    static char buf[80];
+    static char buf[100];	/* "Ski Simulator " + skiID()'s 80 */
 
-    (void)sprintf(buf, "Ski Simulator %s", skiID());
+    (void)snprintf(buf, sizeof (buf), "Ski Simulator %s", skiID());
     return buf;
 }

@@ -194,7 +194,11 @@ Status iCycleApp(void);
 Status iCycleSys(void);
 Status iAiCycle(void);
 void progStop(const char *, ...);
+#if defined __GNUC__
+void progExit(const char *, ...) __attribute__((noreturn));
+#else
 void progExit(const char *, ...);
+#endif
 void progPause(void);
 void sendIPI(int, int, int);
 

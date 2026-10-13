@@ -20,28 +20,24 @@
 # Run this to generate all the initial makefiles, etc.
 #
 
-srcdir=`dirname $0`
+srcdir=`dirname "$0"`
 test -z "${srcdir}" && srcdir=.
 
-PKG_NAME="ski"
-
-(test -f ${srcdir}/configure.ac) || {
-    echo "**Error**: Directory "\`${srcdir}\'" does not look like the"\
-         "top-level ${PKG_NAME} directory"
+(test -f "${srcdir}/configure.ac") || {
+    echo "**Error**: Directory \"${srcdir}\" does not look like the"\
+         "top-level ski directory"
     exit 1
 }
 
-# Deal with the GNUism or Linuxism of always including /usr/local.
-# This is not done on FreeBSD, because /usr/local is not dictated
-# or enforced by FreeBSD and system administrators are free to
-# pick a different tree like /opt for there add-on bits. As such,
-# they are responsible for telling the compiler where the add-on
-# bits are. By default things are put under /usr/local though, so
-# that's our default as well...
-if [ `uname` = FreeBSD ]; then
-    _BASE=${LOCALBASE:=/usr/local}
-    export CPPFLAGS=-I${_BASE}/include
-    export LDFLAGS=-L${_BASE}/lib
-fi
+for tool in autoreconf libtoolize; do
+    command -v $tool > /dev/null 2>&1 || {
+        echo "**Error**: You must have \`$tool' installed to build ski."
+        echo "See the file INSTALL for the list of required packages."
+        exit 1
+    }
+done
 
-. ${srcdir}/macros/autogen.sh
+autoreconf --force --install --verbose "${srcdir}" || exit 1
+
+echo
+echo "Now run \`${srcdir}/configure' and then \`make'."

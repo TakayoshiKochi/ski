@@ -1082,7 +1082,7 @@ stfd_r3_f2                              stfdEx       stfRd       st8Wrt
 stfd_nta_r3_f2                          alias stfd_r3_f2
 stf8_r3_f2                              stf8Ex       stfRd       st8Wrt
 stf8_nta_r3_f2                          alias stf8_r3_f2
-stfe_r3_f2                              stEx         stfRd       stfeWrt
+stfe_r3_f2                              stfeEx       stfRd       stfeWrt
 stfe_nta_r3_f2                          alias stfe_r3_f2
 stf_spill_r3_f2                         stfSpillEx   stfRd       st16Wrt
 stf_spill_nta_r3_f2                     alias stf_spill_r3_f2
@@ -1093,7 +1093,7 @@ stfd_r3_f2_imm9                         stfdEx       stfPiRd     st8PiWrt
 stfd_nta_r3_f2_imm9                     alias stfd_r3_f2_imm9
 stf8_r3_f2_imm9                         stf8Ex       stfPiRd     st8PiWrt
 stf8_nta_r3_f2_imm9                     alias stf8_r3_f2_imm9
-stfe_r3_f2_imm9                         stEx         stfPiRd     stfePiWrt
+stfe_r3_f2_imm9                         stfeEx       stfPiRd     stfePiWrt
 stfe_nta_r3_f2_imm9                     alias stfe_r3_f2_imm9
 stf_spill_r3_f2_imm9                    stfSpillEx   stfPiRd     st16PiWrt
 stf_spill_nta_r3_f2_imm9                alias stf_spill_r3_f2_imm9

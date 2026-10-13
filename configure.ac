@@ -19,11 +19,16 @@
 ##
 ##
 
-# Requires autoconf 2.61
-AC_PREREQ(2.61)
+# Requires autoconf 2.70 (for AC_PROG_LEX([noyywrap]))
+AC_PREREQ([2.70])
 
-# Initialize autoconf (and check for presence of src/ski.h)
-AC_INIT(src/ski.h)
+m4_define([ski_major_version], [1])
+m4_define([ski_minor_version], [3])
+m4_define([ski_micro_version], [2])
+
+AC_INIT([ski], [ski_major_version.ski_minor_version.ski_micro_version])
+AC_CONFIG_SRCDIR([src/ski.h])
+AC_CONFIG_MACRO_DIRS([macros])
 
 dnl Canonical host
 AC_CANONICAL_HOST
@@ -42,9 +47,9 @@ AM_CONDITIONAL(FREEBSD, test "$HOST_OS" = freebsd)
 
 # Version number definitions
 #
-SKI_MAJOR_VERSION=1
-SKI_MINOR_VERSION=3
-SKI_MICRO_VERSION=2
+SKI_MAJOR_VERSION=ski_major_version
+SKI_MINOR_VERSION=ski_minor_version
+SKI_MICRO_VERSION=ski_micro_version
 SKI_INTERFACE_AGE=0
 SKI_BINARY_AGE=0
 SKI_RELEASE=gplv2
@@ -69,43 +74,37 @@ AC_SUBST(LT_CURRENT)
 AC_SUBST(LT_REVISION)
 AC_SUBST(LT_AGE)
 
-# Package information
-PACKAGE=ski
-VERSION=$SKI_VERSION
-
 # Specify the default install prefix
 AC_PREFIX_DEFAULT(/usr/local)
 
 # Initialize automake
-AM_INIT_AUTOMAKE($PACKAGE,$VERSION)
+AM_INIT_AUTOMAKE([foreign subdir-objects])
 
 # Specify a configuration file
-AM_CONFIG_HEADER(config.h)
-AM_ACLOCAL_INCLUDE(macros)
+AC_CONFIG_HEADERS([config.h])
 
 # Checks for programs.
-AC_PROG_CC( icc ecc gcc3 cc gcc )
-AM_PROG_CC_STDC
-AM_PROG_AS
+AC_PROG_CC
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_AWK
 AC_PROG_SED
 AC_PROG_YACC
-AM_PROG_LEX
+AC_PROG_LEX([noyywrap])
+if test "x$LEX" = "x:"; then
+  AC_MSG_ERROR([flex (or lex) is required to build ski.])
+fi
 
 AC_C_INLINE
-AC_C_CONST
-
-dnl Disable shared for default (enable with --enable-shared) 
-AM_DISABLE_SHARED
 
 dnl Check for compiler kind (HP cc or Intel icc)
 AC_LANG_COMPILER_CHECK
 
 dnl Check for required build tools
 AC_CHECK_PROG(GPERF, gperf, gperf)
-test -z "$GPERF" && GPERF='$(top_srcdir)/missing gperf'
+if test -z "$GPERF"; then
+  AC_MSG_ERROR([gperf is required to build ski.])
+fi
 
 dnl Check for the pager program
 AC_CHECK_PROGS(PAGER, [less])
@@ -115,22 +114,22 @@ dnl Set yacc flags
 YFLAGS=-d
 AC_SUBST(YFLAGS)
 
-dnl Initialize libtool
-AC_LIBTOOL_DLOPEN
+dnl Initialize libtool (shared library disabled by default,
+dnl enable with --enable-shared)
+LT_INIT([disable-shared])
 
-AM_PROG_LIBTOOL
+dnl dlopen() is used to load the optional SKIHOOK_PATH hook library
+AC_SEARCH_LIBS([dlopen], [dl], [],
+    [AC_MSG_ERROR([Required function dlopen not found.])])
 
-# build ltdl.o in src
-AC_LIB_LTDL
-
-dnl Initialize maintainer mode
-AM_MAINTAINER_MODE
+dnl Initialize maintainer mode (rebuild rules enabled by default)
+AM_MAINTAINER_MODE([enable])
 
 dnl See if we build X11
 AC_ARG_WITH(x11,
-AC_HELP_STRING([--with-x11],
+AS_HELP_STRING([--with-x11],
     [Enable the Motif based X11 interface default=no]),
-    [with_x11=yes],[with_x11=no])
+    [with_x11=$withval],[with_x11=no])
   
 if test "x$with_x11" = "xyes"; then
   dnl Check for motif, error out if not found
@@ -142,9 +141,9 @@ AC_SUBST(X_INTERFACE_LIBS)
   
 dnl See if we build GTK
 AC_ARG_WITH(gtk,
-AC_HELP_STRING([--with-gtk],
+AS_HELP_STRING([--with-gtk],
     [Enable building the GTK Ski interface default=no]),
-    [with_gtk=yes],[with_gtk=no]
+    [with_gtk=$withval],[with_gtk=no]
 )
 
 if test "x$with_gtk" = "xyes"; then
@@ -157,21 +156,21 @@ AM_CONDITIONAL(WITH_GTK_INTERFACE, test "x$with_gtk" = "xyes")
 
 dnl Target endianness
 AC_ARG_ENABLE(bigendian,
-AC_HELP_STRING([--enable-bigendian],
+AS_HELP_STRING([--enable-bigendian],
     [the target is big endian default=no]),
 ski_cv_c_target_bigendian=${enableval}, ski_cv_c_target_bigendian=no)
 
 dnl Check for host endianness
 AC_CACHE_CHECK([whether host byte ordering is defined in sys/param.h],
 ski_cv_c_bigendian_compile,
-[AC_TRY_COMPILE([
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include <sys/types.h>
 #include <sys/param.h>
-],[
+]],[[
 #if !BYTE_ORDER || !BIG_ENDIAN || !LITTLE_ENDIAN
 #error bogus endian macros
 #endif
-],
+]])],
 ski_cv_c_bigendian_compile=yes, ski_cv_c_bigendian_compile=no)])
 
 if test "x$ski_cv_c_bigendian_compile" = xyes; then
@@ -180,14 +179,14 @@ AC_DEFINE(ENDIANESS_IN_SYS_PARAM_H, 1,
 else
 AC_CACHE_CHECK([whether host byte ordering is big endian],
 ski_cv_c_bigendian,
-[AC_TRY_RUN([int main () {
+[AC_RUN_IFELSE([AC_LANG_SOURCE([[int main () {
     union {
         long l;
         char c[sizeof (long)];
     } u;
     u.l = 1;
     return (u.c[sizeof (long) - 1] == 1);
-}],
+}]])],
 ski_cv_c_bigendian=no, ski_cv_c_bigendian=yes,
 AC_MSG_ERROR([cannot detect host endianness]))])
 
@@ -206,39 +205,12 @@ dnl Check for variables & functions
 
 AC_FUNC_ALLOCA
 
-vars=""
-funcs="strtoull __strtoull"
-
-# These are neither executed nor required, but they help keep
-# autoheader happy.
-if test "yes" = "no"; then
-    AC_CHECK_FUNCS(strtoull __strtoull)
-    AC_DEFINE(HAVE_SYS_SIGIST, 1,
-              [Define if you have the sys_siglist variable.] )
-fi
-# Check for $vars
-for var in $vars; do
-    AC_MSG_CHECKING([for $var])
-    AC_CACHE_VAL(ski_cv_var_$var,
-    [AC_TRY_LINK([int *p;], [extern int $var; p = &$var;],
-                 [eval "ski_cv_var_$var=yes"],
-                 [eval "ski_cv_var_$var=no"])])
-    if eval "test \"`echo '$ski_cv_var_'$var`\" = yes"; then
-        AC_MSG_RESULT(yes)
-        n=HAVE_`echo $var | tr 'abcdefghijklmnopqrstuvwxyz' \
-                'ABCDEFGHIJKLMNOPQRSTUVWXYZ'`
-        AC_DEFINE_UNQUOTED($n)
-    else
-        AC_MSG_RESULT(no)
-    fi
-done
-# Check for $funcs
-AC_CHECK_FUNCS($funcs)
+AC_CHECK_FUNCS([strtoull __strtoull])
 
 dnl Find libelf.h
 AC_CHECK_HEADER(libelf.h,,
     [AC_CHECK_HEADER(libelf/libelf.h, have_libelf_libelf_h=yes,
-        [AC_MSG_ERROR(Required libelf.h header not found.)])])
+        [AC_MSG_ERROR([Required libelf.h header not found (install libelf-dev).])])])
 if test "x$have_libelf_libelf_h" = xyes; then
     AC_DEFINE(HAVE_LIBELF_LIBELF_H, 1, [define if you have libelf/libelf.h])
 fi
@@ -246,7 +218,7 @@ fi
 dnl Check for netdev support
 if test "$HOST_OS" = linux; then
 AC_ARG_ENABLE(netdev,
-    AC_HELP_STRING([--disable-netdev], [disable netdev support]))
+    AS_HELP_STRING([--disable-netdev], [disable netdev support]))
 if test "x$enable_netdev" != xno; then
     AC_DEFINE(SKINET_ENABLE, 1, [define if you want netdev support])
     with_netdev=yes
@@ -265,17 +237,17 @@ AC_CHECK_LIB(unwind-ia64, _Uia64_get_proc_name, )
 # Test for IA-64 libbfd
 
 AC_ARG_WITH(bfd-includes,
-AC_HELP_STRING([--with-bfd-includes],[specify location of bfd headers]),[
+AS_HELP_STRING([--with-bfd-includes],[specify location of bfd headers]),[
     BFD_CFLAGS="-I$withval"
 ])
 
 AC_ARG_WITH(bfd-libs,
-AC_HELP_STRING([--with-bfd-libs],[specify location of bfd libraries]),[
+AS_HELP_STRING([--with-bfd-libs],[specify location of bfd libraries]),[
     BFD_LDFLAGS="-L$withval"
 ])
 
 AC_MSG_CHECKING([for bfd support])
-AC_ARG_WITH(bfd, AC_HELP_STRING([--with-bfd],[use the bfd library]))
+AC_ARG_WITH(bfd, AS_HELP_STRING([--with-bfd],[use the bfd library]))
 
 if test "x$with_bfd" = xno; then
     have_bfd=disabled
@@ -286,13 +258,13 @@ else
     CFLAGS="$CFLAGS $BFD_CFLAGS"
     LDFLAGS="$LDFLAGS $BFD_LDFLAGS"
     LIBS="$LIBS -lbfd -liberty"
-    AC_TRY_RUN([
+    AC_RUN_IFELSE([AC_LANG_SOURCE([[
         #include <bfd.h>
         int main() {
             bfd_init ();
             return bfd_set_default_target ("elf64-ia64-little") == 0;
-        }],
-        have_bfd=yes, have_bfd=no)
+        }]])],
+        have_bfd=yes, have_bfd=no, have_bfd=no)
     CFLAGS=$save_CFLAGS
     LDFLAGS=$save_LDFLAGS
     LIBS=$save_LIBS
@@ -338,15 +310,15 @@ AC_CHECK_LIB(curses, tgetent, [],
 fi
 
 AC_CHECK_LIB(elf, elf_begin, [],
-    [AC_MSG_ERROR(Required library libelf not found.)])
+    [AC_MSG_ERROR([Required library libelf not found (install libelf-dev).])])
 
 dnl Add extra flags to CFLAGS depending on os
 case $host_os in
-    linux*)	CFLAGS="$CFLAGS -DLINUX -D_GNU_SOURCE";;
-    hpux9*)	CFLAGS="$CFLAGS -DHPUX9";;
-    hpux10*)	CFLAGS="$CFLAGS -DHPUX1020";;
-    hpux11*)	CFLAGS="$CFLAGS -DHPUX1100";;
-    freebsd*)	CFLAGS="$CFLAGS -DFREEBSD -D__linux__";;
+    linux*)	CPPFLAGS="$CPPFLAGS -DLINUX -D_GNU_SOURCE";;
+    hpux9*)	CPPFLAGS="$CPPFLAGS -DHPUX9";;
+    hpux10*)	CPPFLAGS="$CPPFLAGS -DHPUX1020";;
+    hpux11*)	CPPFLAGS="$CPPFLAGS -DHPUX1100";;
+    freebsd*)	CPPFLAGS="$CPPFLAGS -DFREEBSD -D__linux__";;
 esac
 
 dnl Add extra flags to CFLAGS depending on compiler
@@ -361,11 +333,12 @@ if test "x$HPCC" = xyes; then
         hppa1.1*) CFLAGS="$CFLAGS +DA11 +DS11";;
     esac
 elif test "x$GCC" = xyes; then
-    CFLAGS="$CFLAGS -D__norcsid -fno-strict-aliasing";
+    CPPFLAGS="$CPPFLAGS -D__norcsid"
+    CFLAGS="$CFLAGS -fno-strict-aliasing"
 fi
 
 AC_ARG_ENABLE(compile-warnings,
-    AC_HELP_STRING([--enable-compile-warnings=[no/minimum/yes]],
+    AS_HELP_STRING([--enable-compile-warnings=@<:@no/minimum/yes@:>@],
         [Turn on compiler warnings.]),,enable_compile_warnings=minimum)
 
 dnl Add warnings flags on Compiler kind
@@ -400,6 +373,7 @@ AC_CONFIG_FILES([macros/Makefile])
 AC_CONFIG_FILES([src/Makefile src/decoder/Makefile src/encoder/Makefile])
 AC_CONFIG_FILES([src/fake-xterm/Makefile])
 AC_CONFIG_FILES([doc/Makefile])
+AC_CONFIG_FILES([testsuite/Makefile])
 
 dnl Output the files
 AC_OUTPUT

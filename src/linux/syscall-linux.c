@@ -72,7 +72,6 @@
 #include <sys/uio.h>
 
 #include <linux/serial.h>
-#include <asm/page.h>
 #include <asm/unistd.h>
 
 #include "std.h"
@@ -1225,8 +1224,6 @@ getPty (void)
        return pfd;
       close (pfd);
     }
-  GrWrtx (8, -1 << 8, 0);	/* set exit status */
-  progExit ("Unable to open console window\n");
   return -1;
 }
 
@@ -1237,6 +1234,10 @@ restore_tty (void)
 }
 
 /*
+ * Returns the console fd, or -1 if the console window could not be
+ * created (e.g., xterm is not installed or there is no display), in
+ * which case the caller falls back to stdin/stdout.
+ *
  * New version of initConsole.
  * It does not use a pipe but the slave/master pty instead
  *
@@ -1263,12 +1264,13 @@ initConsole (int raw)
   int sfd, mfd, i, ret;
 
   /* open master and slave: */
-  mfd = getPty ();
+  if ((mfd = getPty ()) < 0)
+    return -1;
   sfd = open (slave, O_RDWR | O_EXCL | O_NOCTTY);
-  if (sfd < -1)
+  if (sfd < 0)
     {
-      GrWrtx (8, -1 << 8, 0);	/* set exit status */
-      progExit ("Unable to open slave pty\n");
+      close (mfd);
+      return -1;
     }
 
   /*
@@ -1336,11 +1338,22 @@ initConsole (int raw)
   /* parent doesn't need master */
   close (mfd);
 
-  /* read first byte of the window id (and discard it): */
+  if (cons_pid < 0)
+    {
+      close (sfd);
+      return -1;
+    }
+
+  /*
+   * read first byte of the window id (and discard it).  This fails
+   * if the console program could not be run or exited at once.
+   */
   if (read (sfd, cmdBuf, 1) < 1)
     {
-      GrWrtx (8, -1 << 8, 0);	/* set exit status */
-      progExit ("Unable to create console window\n");
+      close (sfd);
+      waitpid (cons_pid, NULL, 0);
+      cons_pid = -1;
+      return -1;
     }
   /*
    * Now once we've seen the first character(s), a tcflush() should be
@@ -1393,7 +1406,13 @@ init (void)
     {
       cfd = initConsole (0);
       if (cfd < 0)
-	noConsole = YES;
+	{
+	  fprintf (stderr, "ski: unable to open a console window (%s); "
+		   "using stdin/stdout instead\n",
+		   consLog || getenv ("SKI_USE_FAKE_XTERM")
+		   ? "ski-fake-xterm" : "xterm");
+	  noConsole = YES;
+	}
     }
 
   if (interface == BATCH)
@@ -1622,7 +1641,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
   struct lia64_statfs lia64_statfs;
   struct statfs host_statfs;
   struct lia64_itimerval lia64_itval;
-  struct itimerval host_itval;
+  struct itimerval host_itval, host_old_itval;
   struct lia64_stat lia64_stat;
   struct lia64_old_stat lia64_old_stat;
   struct stat host_stat;
@@ -2252,8 +2271,10 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 	case TIOCSERSETMULTI:	/* Set multiport config */
 	case TIOCMIWAIT:	/* wait for a change on serial input line(s) */
 	case TIOCGICOUNT:	/* read serial port inline interrupt counts */
+#ifdef TIOCGHAYESESP	/* removed in Linux 2.6.33 */
 	case TIOCGHAYESESP:	/* Get Hayes ESP configuration */
 	case TIOCSHAYESESP:	/* Set Hayes ESP configuration */
+#endif
 	case SIOCRTMSG:	/* call to routing system	*/
 	case SIOCSIFLINK:	/* set iface channel		*/
 	case SIOCGIFMEM:	/* get memory address (BSD)	*/
@@ -2676,7 +2697,12 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 
     case LIA64_uselib:
       memBBRd (ADDPTR (arg0), buf, 0);
-      *status = uselib ((char *) buf);
+#ifdef __NR_uselib	/* glibc no longer provides a uselib() wrapper */
+      *status = syscall (__NR_uselib, (char *) buf);
+#else
+      errno = ENOSYS;
+      *status = -1;
+#endif
       setStatReturn (ret, status);
       break;
 
@@ -2947,13 +2973,13 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
       host_itval.it_interval.tv_usec = lia64_itval.it_interval.tv_usec;
       host_itval.it_value.tv_sec = lia64_itval.it_value.tv_sec;
       host_itval.it_value.tv_usec = lia64_itval.it_value.tv_usec;
-      *status = setitimer (arg0, &host_itval, &host_itval);
+      *status = setitimer (arg0, &host_itval, &host_old_itval);
       if ((int) *status != -1 && arg2 != 0)
 	{
-	  lia64_itval.it_interval.tv_sec = host_itval.it_interval.tv_sec;
-	  lia64_itval.it_interval.tv_usec = host_itval.it_interval.tv_usec;
-	  lia64_itval.it_value.tv_sec = host_itval.it_value.tv_sec;
-	  lia64_itval.it_value.tv_usec = host_itval.it_value.tv_usec;
+	  lia64_itval.it_interval.tv_sec = host_old_itval.it_interval.tv_sec;
+	  lia64_itval.it_interval.tv_usec = host_old_itval.it_interval.tv_usec;
+	  lia64_itval.it_value.tv_sec = host_old_itval.it_value.tv_sec;
+	  lia64_itval.it_value.tv_usec = host_old_itval.it_value.tv_usec;
 	  memBBWrt_alloc (ADDPTR (arg2), (BYTE *) &lia64_itval,
 			  sizeof (lia64_itval));
 	}
@@ -3681,7 +3707,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
       act.sa_flags = sa->sa_flags & ~SA_ONSTACK;
       if (sa->lia_handler == (ADDR) SIG_DFL
 	  || sa->lia_handler == (ADDR) SIG_IGN)
-	act.sa_handler = (void (*)()) (long) sa->lia_handler;
+	act.sa_handler = (void (*)(int)) (long) sa->lia_handler;
       else
 	act.sa_handler = signal_queue;
       *status = sigaction (arg0, &act, 0);
@@ -4009,7 +4035,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 
 	if (arg4 != sizeof (int) && arg4 != sizeof (struct linger))
 	  {
-	    GrWrtx (8, -1 << 8, 0);	/* set exit status */
+	    GrWrtx (8, -(1 << 8), 0);	/* set exit status */
 	    progExit("NR_setsockopt(%d): non-supported parameter *len=%d not "
 		     "supported\n", (int)arg2, (int)arg4);
 	  }
@@ -4036,7 +4062,7 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 
 	if (len != sizeof (int) && len != sizeof (struct linger))
 	  {
-	    GrWrtx (8, -1 << 8, 0);	/* set exit status */
+	    GrWrtx (8, -(1 << 8), 0);	/* set exit status */
 	    progExit ("NR_getsockopt(%d): parameter *len=%d not supported\n",
 		      (int)arg2, (int)len);
 	  }
@@ -4214,7 +4240,7 @@ iskbdio (void)
   r = ioctl (noConsole ? 0 : cfd, FIONREAD, &nb);
   if (r == -1)
     {
-      GrWrtx (8, -1 << 8, 0);	/* set exit status */
+      GrWrtx (8, -(1 << 8), 0);	/* set exit status */
       progExit("isbkbdio: ioctl=%d\n", errno);
     }
   return nb > 0 ? 1 : 0;

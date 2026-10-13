@@ -1217,6 +1217,16 @@ Status stEx(INSTINFO *info)
     return 0;
 }
 
+/* stfe: the value is stored straight from FSRC1 by stfeWrt/stfePiWrt */
+Status stfeEx(INSTINFO *info)
+{
+    if (SRCNAT1 || SRCNAT2) {
+	regNatConsumptionFault(MEM_ST_ACCESS);
+	return StFault;
+    }
+    return 0;
+}
+
 Status st16Ex(INSTINFO *info)
 {
     if (SRCNAT1 || SRCNAT2) {

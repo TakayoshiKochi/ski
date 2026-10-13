@@ -19,7 +19,9 @@
 ##
 ##
 
-SUBDIRS=macros src doc
+ACLOCAL_AMFLAGS=-I macros
+
+SUBDIRS=macros src doc testsuite
 
 bin_SCRIPTS=ski-config
 

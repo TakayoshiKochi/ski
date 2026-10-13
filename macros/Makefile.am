@@ -20,14 +20,8 @@
 ##
 
 MACROS = \
-	aclocal-include.m4 \
-	compilers.m4
+	compilers.m4 \
+	motif.m4
 
 EXTRA_DIST= \
-	$(MACROS) \
-	autogen.sh
-
-MAINTAINERCLEANFILES=macros.dep
-
-@MAINT@macros.dep: Makefile.am
-@MAINT@	@echo '$$(top_srcdir)/aclocal.m4: $(MACROS:%=macros/%)' > $@
+	$(MACROS)

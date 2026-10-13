@@ -26,12 +26,7 @@
 #include <setjmp.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <ltdl.h>
-
-/* XXX should list systems that need the header */
-#if !defined(linux) && !defined HPUX9 && !defined(__FreeBSD__)
-#include <dl.h>
-#endif
+#include <dlfcn.h>
 #ifdef NEW_MP
 #include "decoder.h"
 #include "encoder.h"
@@ -88,7 +83,7 @@ unsigned preInst;
 #endif
 
 
-lt_dlhandle hook_handle = 0;
+void *hook_handle = NULL;
 typedef void (*PFHOOK)(void);
 PFHOOK ski_hook_init, ski_hook, ski_hook_fini;
 #define PRE_HOOK 32
@@ -889,13 +884,7 @@ IAinstInfoPtr addrToIAcacheInfo(ADDR adr)
 void initSysState(void)
 {
     char *hook_path;
-    int status;
-    status = lt_dlinit();
-    if(status != 0) {
-        fprintf(stderr, "lt_dlinit failed (%s)\n", lt_dlerror());
-        exit(EXIT_FAILURE);
-    }
-   
+
 #ifdef NEW_MP
     instsLeft = ipts = mips * TIMESLICE;
 #endif
@@ -903,19 +892,18 @@ void initSysState(void)
     ibBase  = 0x00000000FEE00000ULL;
     preInst = icntEnb ? PRE_ICNT : 0;
     if ((hook_path = getenv("SKIHOOK_PATH"))) {
-	if (!(hook_handle = lt_dlopen(hook_path))) {
+	if (!(hook_handle = dlopen(hook_path, RTLD_NOW))) {
 	    fprintf(stderr, "Could not load hook: %s (%s)\n",
-		    hook_path, lt_dlerror());
-        lt_dlexit();
+		    hook_path, dlerror());
 	    exit(EXIT_FAILURE);
 	}
-	ski_hook = (PFHOOK) lt_dlsym(hook_handle, "ski_hook");
+	ski_hook = (PFHOOK) dlsym(hook_handle, "ski_hook");
 	if (!ski_hook) {
 	    fprintf(stderr, "Could not find ski_hook\n");
-        lt_dlexit();
+	    dlclose(hook_handle);
 	    exit(EXIT_FAILURE);
 	}
-    ski_hook_init = (PFHOOK) lt_dlsym(hook_handle, "ski_hook_init");
+	ski_hook_init = (PFHOOK) dlsym(hook_handle, "ski_hook_init");
 	if (ski_hook_init != NULL) {
 	    hook_init();
 	}
@@ -925,16 +913,13 @@ void initSysState(void)
 
 void skiHookFini(void)
 {
-    int status;
-    ski_hook_fini = (PFHOOK) lt_dlsym(hook_handle, "ski_hook_fini");
-	if (ski_hook_init != NULL) {
-	    hook_fini();
-	}
-    status = lt_dlexit();
-    if(status != 0) {
-        fprintf(stderr, "lt_dlexit failed (%s)\n", lt_dlerror());
-        exit(EXIT_FAILURE);
-    }
+    if (!hook_handle)
+	return;
+    ski_hook_fini = (PFHOOK) dlsym(hook_handle, "ski_hook_fini");
+    if (ski_hook_fini != NULL)
+	hook_fini();
+    dlclose(hook_handle);
+    hook_handle = NULL;
 }
 
 void resetState(int proc)

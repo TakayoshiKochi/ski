@@ -410,7 +410,7 @@ static BOOL p1eq0_p2ne0(OperandsPtr opnds)
 
 static BOOL mask17_all(OperandsPtr opnds)
 {
-    return opnds->u.I23.mask17.bits == (-1 << 1);
+    return opnds->u.I23.mask17.bits == -(1 << 1);
 }
 
 static void no_f2_F9(OperandsPtr opnds)

@@ -1224,52 +1224,7 @@ Status oneArRd(INSTINFO *info)
 Status breakRd(INSTINFO *info)
 {
     /* XXX - check SRCNATs? */
-#if defined __linux__
-    int base = 32;
-
-    /* Note: we read out0-out5 here.  This may look counter-intuitive since the
-       called function expects the arguments in in0-in5.  However, the normal
-       syscall sequence is:
-
-	 br.call syscall_stub -> break 0x100000 -> br.call -> syscall -> br.ret
-
-       The first call renames out0-outN to in0-inN, the second call
-       acts as a no-op as far as renaming is concerned because "size
-       of frame" (sof) is set to zero by the first br.call.
-
-       However, consider the case of an inlined system call.  In this case, the
-       syscall sequence is:
-
-         break 0x100000 -> br.call -> syscall -> br.ret
-
-       This time, the syscall args are in out0-outN when the break
-       instruction is executed and (the formerly second) br.call is
-       what is causing the renaming from out0-outN to in0-inN.  In
-       other words, to make the user-level simulation work both with
-       syscall stubs and with inlined stubs, we need to read the
-       _output_ registers.  */
-    if (unixABI)
-        base += soil;
-    GrRd(base + 0, ARG0, SRCNAT1, NO);
-    GrRd(base + 1, ARG1, SRCNAT1, NO);
-    GrRd(base + 2, ARG2, SRCNAT1, NO);
-    GrRd(base + 3, ARG3, SRCNAT1, NO);
-    GrRd(base + 4, ARG4, SRCNAT1, NO);
-    GrRd(base + 5, ARG5, SRCNAT1, NO);
-    GrRd(base + 6, ARG6, SRCNAT1, NO);
-    GrRd(base + 7, ARG7, SRCNAT1, NO);
-    GrRd(15, SC_NUM, SRCNAT1, NO);
-#else /* !defined __linux__ */
-    GrRd(8, SC_NUM, SRCNAT1, NO);
-    GrRd(32, ARG0, SRCNAT1, NO);
-    GrRd(33, ARG1, SRCNAT1, NO);
-    GrRd(34, ARG2, SRCNAT1, NO);
-    GrRd(35, ARG3, SRCNAT1, NO);
-    GrRd(36, ARG4, SRCNAT1, NO);
-    GrRd(37, ARG5, SRCNAT1, NO);
-    GrRd(38, ARG6, SRCNAT1, NO);
-    GrRd(39, ARG7, SRCNAT1, NO);
-#endif /* !defined __linux */
+    BREAK_SYSCALL_RD;
     SRC1 = ip;
     SRC2 = imm64;
     return PrRd(qp);
@@ -1277,6 +1232,7 @@ Status breakRd(INSTINFO *info)
 
 Status breakbRd(INSTINFO *info)
 {
+    BREAK_SYSCALL_RD;
     SRC1 = ip;
     SRC2 = 0;
     return PrRd(qp);
@@ -1284,6 +1240,7 @@ Status breakbRd(INSTINFO *info)
 
 Status breakxRd(INSTINFO *info)
 {
+    BREAK_SYSCALL_RD;
     SRC1 = ip;
     SRC2 = imm64 & 0x1fffff;    /* only the bottom 21 bits */
     return PrRd(qp);

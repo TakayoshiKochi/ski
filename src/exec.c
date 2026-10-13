@@ -273,7 +273,10 @@ Status breakEx(INSTINFO *info)
 	)
 	doSyscall(SC_NUM, ARG0, ARG1, ARG2, ARG3, ARG4, ARG5, ARG6, ARG7,
 		  &SC_RET, &SC_STAT);
-    else if (unixABI && (imm64 == BREAK_DEBUG_EVENT || imm64 == 0x70327ULL))
+    else if (unixABI && (imm64 == BREAK_DEBUG_EVENT || imm64 == 0x70327ULL)) {
+	/* not a system call: have breakWrt() leave r8 and r10 unchanged */
+	GrRd(8, SC_RET, SRCNAT3, NO);
+	GrRd(10, SC_STAT, SRCNAT3, NO);
 	switch ((int)ARG0) {
 	    case BREAK_DE_SVC_LOADED:
 	    case BREAK_DE_LIB_LOADED:
@@ -289,7 +292,7 @@ Status breakEx(INSTINFO *info)
 		breakInstFault(SRC2);
 		return StFault;
 	}
-    else if (!unixABI && (imm64 == 0x80000ULL || imm64 == 0x80001ULL)) {
+    } else if (!unixABI && (imm64 == 0x80000ULL || imm64 == 0x80001ULL)) {
 	GrRd(15, SC_NUM, SRCNAT1, NO);	/* XXX - check SRCNAT1? */
 	doSSC(SC_NUM, ARG0, ARG1, ARG2, ARG3, &SC_RET);
         st |= ST_CHECK;
