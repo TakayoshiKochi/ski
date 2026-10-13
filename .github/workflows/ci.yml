@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: ${{ matrix.cc }}${{ matrix.std && format(' {0}', matrix.std) || '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - cc: gcc
+          - cc: gcc
+            std: -std=gnu2x
+          - cc: clang
+            std: -std=gnu2x
+    env:
+      CC: ${{ matrix.cc }}
+      CFLAGS: -O2 -g ${{ matrix.std }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential autoconf automake libtool libtool-bin \
+            libelf-dev gperf bison flex libncurses-dev gawk pkg-config \
+            clang
+
+      - name: Configure
+        run: |
+          autoreconf -fi
+          ./configure
+
+      - name: Build
+        run: make -j"$(nproc)"
+
+      - name: Test
+        run: make check
+
+      - name: Show test logs
+        if: failure()
+        run: cat testsuite/test-suite.log testsuite/*.log 2>/dev/null || true
+
+  distcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential autoconf automake libtool libtool-bin \
+            libelf-dev gperf bison flex libncurses-dev gawk pkg-config
+
+      - name: Distcheck
+        run: |
+          autoreconf -fi
+          ./configure
+          make -j"$(nproc)" distcheck

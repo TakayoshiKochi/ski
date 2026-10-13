@@ -182,6 +182,10 @@ from a clean checkout.
 - Add a GitHub Actions workflow on ubuntu-latest that installs §2.1, then
   runs `autoreconf -fi && ./configure && make && make check`. This keeps
   the build from rotting again.
+- **Done:** `.github/workflows/ci.yml` runs on every push and pull request
+  (and by hand). It builds and runs `make check` with gcc (default
+  standard), gcc `-std=gnu2x` and clang `-std=gnu2x`, plus a separate
+  `make distcheck` job. The same commands pass locally on a fresh clone.
 
 ## 4. Out of scope for Phase 1 (candidates for later)
 
