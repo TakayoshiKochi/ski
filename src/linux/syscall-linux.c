@@ -36,7 +36,7 @@
 #include <ustat.h>
 #endif
 
-#undef B0	/* termio.h on Linux defines this */
+#undef B0	/* termios.h on Linux defines this */
 
 #include <net/ethernet.h>
 #include <net/if.h>
@@ -239,6 +239,18 @@ struct lia64_flock
     lia64_off_t l_len;
     lia64_pid_t l_pid;
     int pad;
+  };
+
+/* The old SysV terminal interface, used by TCGETA/TCSETA.  glibc 2.42
+   removed <termio.h>, so the Linux/ia64 layout is spelled out here.  */
+struct lia64_termio
+  {
+    unsigned short c_iflag;
+    unsigned short c_oflag;
+    unsigned short c_cflag;
+    unsigned short c_lflag;
+    unsigned char c_line;
+    unsigned char c_cc[8];
   };
 
 struct lia64_rlimit
@@ -2124,15 +2136,13 @@ doSyscall (HWORD num, REG arg0, REG arg1, REG arg2, REG arg3, REG arg4,
 	  break;
 
 	case TCGETA:
-	  /* assumes host OS matches Linux/ia64 */
-	  bytes_out = sizeof (struct termio);
+	  bytes_out = sizeof (struct lia64_termio);
 	  break;
 
 	case TCSETA:
 	case TCSETAW:
 	case TCSETAF:
-	  /* assumes host OS matches Linux/ia64 */
-	  bytes_in = sizeof (struct termio);
+	  bytes_in = sizeof (struct lia64_termio);
 	  break;
 
 	case TIOCGPGRP:
