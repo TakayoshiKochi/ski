@@ -8,8 +8,10 @@ on:
 jobs:
   build:
     name: ${{ matrix.cc }}${{ matrix.std && format(' {0}', matrix.std) || '' }}
-    # The runner is self-hosted and this repository is public: never run
-    # pull requests from forks on it.
+    # The runner is self-hosted and this repository is public, so skip
+    # pull requests from forks.  A fork can edit this file and drop the
+    # condition; the real protection is the repository setting that makes
+    # fork pull request workflows wait for a maintainer's approval.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, Linux, X64]
     container: ubuntu:26.04
@@ -54,8 +56,10 @@ jobs:
         run: cat testsuite/test-suite.log testsuite/*.log 2>/dev/null || true
 
   distcheck:
-    # The runner is self-hosted and this repository is public: never run
-    # pull requests from forks on it.
+    # The runner is self-hosted and this repository is public, so skip
+    # pull requests from forks.  A fork can edit this file and drop the
+    # condition; the real protection is the repository setting that makes
+    # fork pull request workflows wait for a maintainer's approval.
     if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     runs-on: [self-hosted, Linux, X64]
     container: ubuntu:26.04
