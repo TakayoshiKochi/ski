@@ -113,6 +113,7 @@ BUILT_SOURCES= \
 	$(DAS_INSTR_DERIVED) \
 	$(ASM_HASH_DERIVED) \
 	$(ICNT_DERIVED) \
+	eparse.h \
 	instr.c
 
 ski_SOURCES= \
