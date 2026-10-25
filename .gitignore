@@ -32,6 +32,7 @@ Makefile.in
 *.la
 .deps/
 .libs/
+.dirstamp
 
 # generated sources (src/)
 /src/asm_hash.c
