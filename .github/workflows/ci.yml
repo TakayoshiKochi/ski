@@ -9,6 +9,7 @@ jobs:
   build:
     name: ${{ matrix.cc }}${{ matrix.std && format(' {0}', matrix.std) || '' }}
     runs-on: ubuntu-latest
+    container: ubuntu:26.04
     strategy:
       fail-fast: false
       matrix:
@@ -21,16 +22,18 @@ jobs:
     env:
       CC: ${{ matrix.cc }}
       CFLAGS: -O2 -g ${{ matrix.std }}
+      DEBIAN_FRONTEND: noninteractive
     steps:
-      - uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git ca-certificates \
             build-essential autoconf automake libtool libtool-bin \
             libelf-dev gperf bison flex libncurses-dev gawk pkg-config \
             clang
+
+      - uses: actions/checkout@v4
 
       - name: Configure
         run: |
@@ -49,15 +52,19 @@ jobs:
 
   distcheck:
     runs-on: ubuntu-latest
+    container: ubuntu:26.04
+    env:
+      DEBIAN_FRONTEND: noninteractive
     steps:
-      - uses: actions/checkout@v4
-
       - name: Install dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends \
+          apt-get update
+          apt-get install -y --no-install-recommends \
+            git ca-certificates \
             build-essential autoconf automake libtool libtool-bin \
             libelf-dev gperf bison flex libncurses-dev gawk pkg-config
+
+      - uses: actions/checkout@v4
 
       - name: Distcheck
         run: |
